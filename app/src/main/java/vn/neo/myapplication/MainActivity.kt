@@ -2,14 +2,11 @@ package vn.neo.myapplication
 
 import android.app.ProgressDialog
 import android.content.Context
-import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Matrix
-import android.net.Uri
 import android.os.AsyncTask
 import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
 import android.support.v7.app.AppCompatActivity
 import io.reactivex.Completable
 import io.reactivex.Observable
@@ -24,10 +21,11 @@ import java.io.IOException
 import java.net.Socket
 import java.net.UnknownHostException
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 
 class MainActivity : AppCompatActivity() {
-
+    var i = 0
     var progess: ProgressDialog? = null
     lateinit var printingWebView: PrintingWebView
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,7 +33,9 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         printingWebView = PrintingWebView.getInstance()
         initWebView(this)
-//        webView = getWebView(this)
+        Completable.complete().delay(3, TimeUnit.SECONDS)
+                .andThen(preLoadHtml("pay-template", "{}"))
+                .subscribe()
         progess = ProgressDialog(this)
         progess?.setTitle("Đang in vui lòng chờ...")
         btnPrint.setOnClickListener {
@@ -71,7 +71,7 @@ class MainActivity : AppCompatActivity() {
                     "\t\t    \"list_product_ticket\": [\n" +
                     "\t\t        {\n" +
                     "\t\t            \"product_name\": \"Bánh mì\",\n" +
-                    "\t\t            \"product_price\": \"10,000\",\n" +
+                    "\t\t            \"product_price\": \"${i}\",\n" +
                     "\t\t            \"number\": \"10\",\n" +
                     "\t\t            \"total_price\": \"100,000\"\n" +
                     "\t\t        },\n" +
@@ -122,6 +122,7 @@ class MainActivity : AppCompatActivity() {
                     "\t\t     \"customer_name\":\"Nguyễn Văn Long\",\n" +
                     "\t\t     \"customer_email\":\"longnv@neo.vn\"\n" +
                     "\t\t    }"
+            i++
             addHtml("pay-template", ticket, progess)
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(object : DisposableCompletableObserver() {
@@ -191,7 +192,7 @@ class MainActivity : AppCompatActivity() {
                     ProcessConnectAndPrinter(object : ProcessConnectAndPrinter.ListenerProcessPrinter {
                         override fun onPostDone(result: Int) {
                             if (progress?.isShowing == true) {
-                                progress?.hide()
+                                progress.hide()
                             }
 //                            if (result == 1) {
 //                                Toast.makeText(this@MainActivity, "In thành công", Toast.LENGTH_LONG).show()
@@ -214,6 +215,11 @@ class MainActivity : AppCompatActivity() {
                 }
     }
 
+    fun preLoadHtml(templateId: String, json: String): Completable {
+        return PrintingWebView.getInstance().loadPrintingContent(templateId, json)
+                .andThen(PrintingWebView.getInstance().captureWebView())
+                .toCompletable()
+    }
 
     fun initWebView(context: Context) {
         val startTime = Calendar.getInstance().timeInMillis

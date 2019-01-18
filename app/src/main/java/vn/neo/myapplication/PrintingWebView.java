@@ -105,7 +105,7 @@ public class PrintingWebView {
                 .retryWhen(failures -> failures.zipWith(Flowable.range(1, PAGE_LOADED_RETRY_TIMES), (err, attempt) -> attempt < PAGE_LOADED_RETRY_TIMES ?
                         Flowable.timer(PAGE_LOAD_DELAY_TIME, TimeUnit.MILLISECONDS) :
                         Flowable.error(err)).flatMap(x -> x))
-                //.flatMap(bitmap -> clearPrintingContent().toSingleDefault(bitmap))
+                .flatMap(bitmap -> clearPrintingContent().toSingleDefault(bitmap))
                 .doOnSuccess(bitmap -> Timber.d("PrintingWebView.captureWebView[" + (Calendar.getInstance().getTimeInMillis() - startTime[0]) + "]ms"));
     }
 
