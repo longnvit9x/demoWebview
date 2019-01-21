@@ -9,8 +9,8 @@ package vn.neo.myapplication.print;
 import android.graphics.Bitmap;
 import android.support.annotation.NonNull;
 
-public class PrintingDataSlice implements Comparable<PrintingDataSlice> {
-    public PrintingDataSlice(int index, Bitmap data) {
+public class PrintingDataSliceCus implements Comparable<PrintingDataSliceCus> {
+    public PrintingDataSliceCus(int index, Bitmap data) {
         this.index = index;
         this.data = data;
     }
@@ -26,7 +26,7 @@ public class PrintingDataSlice implements Comparable<PrintingDataSlice> {
     public Bitmap data;
 
     @Override
-    public int compareTo(@NonNull PrintingDataSlice target) {
+    public int compareTo(@NonNull PrintingDataSliceCus target) {
         return ((Integer) this.index).compareTo(target.index);
 
     }
