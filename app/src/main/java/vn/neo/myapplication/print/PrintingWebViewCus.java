@@ -1,16 +1,19 @@
-package vn.neo.myapplication;
+package vn.neo.myapplication.print;
 
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Picture;
 import android.graphics.PixelFormat;
 import android.os.Build;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.webkit.ConsoleMessage;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
@@ -33,13 +36,13 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import timber.log.Timber;
 
 /**
- * PrintingWebView
+ * PrintingWebViewCus
  * Create and load WebView
  * Created by guosx on 2017/5/5.
  */
-public class PrintingWebView {
+public class PrintingWebViewCus {
 
-    private static PrintingWebView instance = null;
+    private static PrintingWebViewCus instance = null;
 
     private String indexUrl = "file:///android_asset/print-template/index.html";
 
@@ -66,9 +69,9 @@ public class PrintingWebView {
 
     private WebView webView = null;
 
-    public static PrintingWebView getInstance() {
+    public static PrintingWebViewCus getInstance() {
         if (instance == null) {
-            return instance = new PrintingWebView();
+            return instance = new PrintingWebViewCus();
         } else {
             return instance;
         }
@@ -84,12 +87,27 @@ public class PrintingWebView {
         final Long[] startTime = new Long[1];
         Single<Bitmap> capture = Single.fromCallable(() -> {
             startTime[0] = Calendar.getInstance().getTimeInMillis();
+            webView.measure(View.MeasureSpec.makeMeasureSpec(
+                    View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED),
+                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+            webView.layout(0, 0, webView.getMeasuredWidth(),
+                    webView.getMeasuredHeight());
+            webView.setDrawingCacheEnabled(true);
+            webView.buildDrawingCache();
+            Bitmap  b = Bitmap.createBitmap( webView.getWidth(),
+                    webView.getMeasuredHeight(), Bitmap.Config.ARGB_8888);
+            Canvas c = new Canvas( b );
 
+            webView.draw( c );
+            float scale = webView.getScale();
+            Bitmap bm = Bitmap.createBitmap(webView.getWidth(), (int) (webView.getContentHeight() * scale + 0.5), Bitmap.Config.ARGB_8888);
+            Canvas cv = new Canvas(bm);
+            webView.draw(cv);
             int width = webView.getWidth();
             int height = webView.getContentHeight();
 
             if (width <= 0 || height <= 10) {
-                throw new PageNotLoadedException();
+                throw new PageNotLoadedExceptionCus();
             }
 
             // WebView screenshot
@@ -98,7 +116,7 @@ public class PrintingWebView {
             Canvas canvas = new Canvas(bitmap);
             webView.draw(canvas);
 
-            return bitmap;
+            return b;
         });
 
         return capture.subscribeOn(AndroidSchedulers.mainThread())
@@ -106,7 +124,7 @@ public class PrintingWebView {
                         Flowable.timer(PAGE_LOAD_DELAY_TIME, TimeUnit.MILLISECONDS) :
                         Flowable.error(err)).flatMap(x -> x))
                 .flatMap(bitmap -> clearPrintingContent().toSingleDefault(bitmap))
-                .doOnSuccess(bitmap -> Timber.d("PrintingWebView.captureWebView[" + (Calendar.getInstance().getTimeInMillis() - startTime[0]) + "]ms"));
+                .doOnSuccess(bitmap -> Timber.d("PrintingWebViewCus.captureWebView[" + (Calendar.getInstance().getTimeInMillis() - startTime[0]) + "]ms"));
     }
 
 
@@ -152,7 +170,7 @@ public class PrintingWebView {
                 .flatMapMaybe(this::evaluateJavascript)
                 .flatMapCompletable((value) -> Completable.complete())
                 .doOnComplete(() -> {
-                    Timber.d("PrintingWebView.loadPrintingContent[" + (Calendar.getInstance().getTimeInMillis() - startTime[0]) + "]ms");
+                    Timber.d("PrintingWebViewCus.loadPrintingContent[" + (Calendar.getInstance().getTimeInMillis() - startTime[0]) + "]ms");
                 });
     }
 
@@ -174,7 +192,7 @@ public class PrintingWebView {
                         e.onSuccess(JSON.parse(value));
                     }
 
-                    Timber.d("PrintingWebView.evaluateJavascript[" + (Calendar.getInstance().getTimeInMillis() - startTime) + "]ms");
+                    Timber.d("PrintingWebViewCus.evaluateJavascript[" + (Calendar.getInstance().getTimeInMillis() - startTime) + "]ms");
                 });
             }
         }).subscribeOn(AndroidSchedulers.mainThread());
@@ -185,16 +203,16 @@ public class PrintingWebView {
      * <p>
      * Maybe you can invoke when app starts to save print time.
      */
-    public void create(Context context) {
+    public void create(Context context, WebView web) {
         this.context = context;
-
-        createWebView(context);
+        this.webView= web;
+       // createWebView(context,webView);
 
         // init web view
         initWebView();
 
         // load index page
-        webView.loadUrl(indexUrl);
+       webView.loadUrl(indexUrl);
         webView.setDrawingCacheEnabled(true);
     }
 
@@ -206,9 +224,12 @@ public class PrintingWebView {
 
         webView.setVerticalScrollBarEnabled(false);
         webView.setHorizontalScrollBarEnabled(false);
+        webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setCacheMode(WebSettings.LOAD_DEFAULT);
         webView.getSettings().setDefaultTextEncodingName("utf-8");
-        webView.getSettings().setJavaScriptEnabled(true);
+        webView.getSettings().setAllowContentAccess(true);
+        // add
+
 
         // TODO process finish
         webView.setWebViewClient(new WebViewClient() {
@@ -232,8 +253,23 @@ public class PrintingWebView {
                 setLoadingFinished(false);
             }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
             @Override
             public void onPageFinished(WebView view, String url) {
+                view.loadUrl("javascript:AndroidFunction.resize(document.body.scrollHeight)");
                 setLoadingFinished(true);
             }
         });
@@ -246,33 +282,41 @@ public class PrintingWebView {
                 return true;
             }
         });
+        webView.addJavascriptInterface(new WebAppInterface(),"AndroidFunction");
     }
 
+    public class WebAppInterface {
 
+        @JavascriptInterface
+        public void resize(final float height) {
+            float webViewHeight = (height * context.getResources().getDisplayMetrics().density);
+            //webViewHeight is the actual height of the WebView in pixels as per device screen density
+        }
+    }
     /**
      * Create a new WebView
      *
      * @return WebView
      */
-    private void createWebView(Context context) {
-        WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+    private void createWebView(Context context, WebView webView) {
+//        WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+//
+//        WindowManager.LayoutParams params = new WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY, WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE, PixelFormat.TRANSLUCENT);
+//        params.gravity = Gravity.TOP | Gravity.LEFT;
+//        params.x = 0;
+//        params.y = 0;
+//        params.width = 576;
+//        params.height = WindowManager.LayoutParams.WRAP_CONTENT;
 
-        WindowManager.LayoutParams params = new WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY, WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE, PixelFormat.TRANSLUCENT);
-        params.gravity = Gravity.TOP | Gravity.LEFT;
-        params.x = 0;
-        params.y = 0;
-        params.width = 576;
-        params.height = WindowManager.LayoutParams.WRAP_CONTENT;
+//        LinearLayout linearLayout = new LinearLayout(context);
+//        linearLayout.setLayoutParams(new RelativeLayout.LayoutParams(576, RelativeLayout.LayoutParams.WRAP_CONTENT));
 
-        LinearLayout linearLayout = new LinearLayout(context);
-        linearLayout.setLayoutParams(new RelativeLayout.LayoutParams(576, RelativeLayout.LayoutParams.WRAP_CONTENT));
+        this.webView = webView;
+        this.webView.setLayoutParams(new LinearLayout.LayoutParams(576, LinearLayout.LayoutParams.WRAP_CONTENT));
+//        this.webView.setVisibility(View.INVISIBLE);
+       // linearLayout.addView(this.webView);
 
-        this.webView = new WebView(context);
-        webView.setLayoutParams(new LinearLayout.LayoutParams(576, LinearLayout.LayoutParams.WRAP_CONTENT));
-        webView.setVisibility(View.INVISIBLE);
-        linearLayout.addView(webView);
-
-        windowManager.addView(linearLayout, params);
+        //windowManager.addView(linearLayout, params);
     }
 
     /**
