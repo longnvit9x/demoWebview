@@ -11,8 +11,8 @@ import android.graphics.Bitmap;
 /**
  * Bitmap slice.
  */
-class BitmapSlice {
-    public BitmapSlice(int index, Bitmap bitmap) {
+class BitmapSliceCus {
+    public BitmapSliceCus(int index, Bitmap bitmap) {
         this.index = index;
         this.bitmap = bitmap;
     }

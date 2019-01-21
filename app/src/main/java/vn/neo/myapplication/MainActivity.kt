@@ -22,19 +22,9 @@ import java.net.UnknownHostException
 class MainActivity : AppCompatActivity() {
     var i = 0
     var progess: ProgressDialog? = null
-    lateinit var webview: WebView
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        webview = findViewById(R.id.webview)
-        webview.settings?.javaScriptEnabled = true
-        webview.isDrawingCacheEnabled = true
-        webview.clearCache(true);
-        webview.settings.builtInZoomControls = true;
-        webview.settings.setSupportZoom(true);
-        webview.settings.defaultZoom = WebSettings.ZoomDensity.FAR;
-
-        webview.loadUrl("file:///android_asset/print-template/index.html")
         progess = ProgressDialog(this)
         progess?.setTitle("Đang in vui lòng chờ...")
         btnPrint.setOnClickListener {
@@ -469,18 +459,6 @@ class MainActivity : AppCompatActivity() {
                     "\t\t     \"customer_email\":\"longnv@neo.vn\"\n" +
                     "\t\t    }"
             i++
-//            addHtml("pay-template", ticket, progess)
-//                    .observeOn(AndroidSchedulers.mainThread())
-//                    .subscribe(object : DisposableCompletableObserver() {
-//                        override fun onComplete() {
-//
-//                        }
-//
-//                        override fun onError(@NonNull e: Throwable) {
-//
-//                        }
-//                    })
-            webview.loadUrl("javascript:loadContent('pay-template', $ticket)")
             this@MainActivity.startActivityForResult(WebPrintActivity.newIntent(this,"10.252.10.208","pay-template",ticket),REQUEST_CODE_PRINT)
         }
     }

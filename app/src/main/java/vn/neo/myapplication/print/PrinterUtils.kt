@@ -43,11 +43,11 @@ object PrinterUtils {
                 .doOnComplete { Timber.d("Printer.addHtml[" + (Calendar.getInstance().timeInMillis - startTime[0]) + "]ms") }
     }
 
-    private fun generatePrintingSlices(templateId: String, json: String): Observable<PrintingDataSlice> {
+    private fun generatePrintingSlices(templateId: String, json: String): Observable<PrintingDataSliceCus> {
         return PrintingWebViewCus.getInstance().loadPrintingContent(templateId, json)
                 .delay(1000, TimeUnit.MILLISECONDS)
                 .andThen(PrintingWebViewCus.getInstance().captureWebView())
-                .flatMapObservable(PrintingDataGenerator::generatePrintingSlices)
+                .flatMapObservable(PrintingDataGeneratorCus::generatePrintingSlices)
     }
 
     fun preLoadHtml(templateId: String, json: String): Completable {
@@ -66,7 +66,7 @@ object PrinterUtils {
     }
 
 
-    class ProcessConnectAndPrinter constructor(private val listener: ListenerProcessPrinter) : AsyncTask<Pair<String, List<PrintingDataSlice>>, String, Int>() {
+    class ProcessConnectAndPrinter constructor(private val listener: ListenerProcessPrinter) : AsyncTask<Pair<String, List<PrintingDataSliceCus>>, String, Int>() {
         interface ListenerProcessPrinter {
             fun onPostDone(result: Int)
         }
@@ -164,16 +164,18 @@ object PrinterUtils {
             return mBitmap
         }
 
-        override fun doInBackground(vararg params: Pair<String, List<PrintingDataSlice>>): Int {
+        override fun doInBackground(vararg params: Pair<String, List<PrintingDataSliceCus>>): Int {
             try {
                 val sock = Socket(params[0].first, 9100)
                 val oStream = sock.getOutputStream()
                 oStream.write(DataForSendToPrinterPos80.initializePrinter())
                 params[0].second.sortedBy { it.index }.map {
-                    val bm1 = convertGreyImg(it.data)
-                    val bm2 = resizeImage(bm1, 572, false)
-                    oStream.write(DataForSendToPrinterPos80.printRasterBmp(
-                            0, bm2, BitmapToByteData.BmpType.Threshold, BitmapToByteData.AlignType.Left, 576))
+//                    val bm1 = convertGreyImg(it.data)
+//                    val bm2 = resizeImage(bm1, 572, false)
+                    DataForSendToPrinterPos80.printRasterBmp(
+                            0, it.data, BitmapToByteData.BmpType.Threshold, BitmapToByteData.AlignType.Left, 576)
+                }.toList().forEach {
+                    oStream.write(it)
                 }
                 oStream.write(DataForSendToPrinterPos80.selectCutPagerModerAndCutPager(66, 1))
                 oStream.close()
@@ -195,21 +197,5 @@ object PrinterUtils {
             super.onPostExecute(result)
             listener.onPostDone(result)
         }
-    }
-
-    var ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE = 5469
-    fun checkPermission(activity: Activity?): Boolean {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (!Settings.canDrawOverlays(activity)) {
-                val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                        Uri.parse("package:" + activity?.packageName))
-                activity?.startActivityForResult(intent, ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE)
-                return false
-            } else {
-                return true
-            }
-            return false
-        }
-        return false
     }
 }
