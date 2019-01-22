@@ -1,14 +1,9 @@
 package vn.neo.myapplication.print
 
-import android.app.Activity
 import android.content.Context
-import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Matrix
-import android.net.Uri
 import android.os.AsyncTask
-import android.os.Build
-import android.provider.Settings
 import android.webkit.WebView
 import io.reactivex.Completable
 import io.reactivex.Observable
@@ -56,12 +51,10 @@ object PrinterUtils {
                 .toCompletable()
     }
 
-    fun initWebView(context: Context,webview: WebView) {
+    fun initWebView(context: Context, webview: WebView, indexUrl: String) {
         val startTime = Calendar.getInstance().timeInMillis
-
+        PrintingWebViewCus.getInstance().indexUrl=indexUrl
         PrintingWebViewCus.getInstance().create(context,webview)
-        //PrintingWebViewCus.getInstance().indexUrl="file:///android_asset/print-template-tablet/index.html";
-//        // before load page
         Timber.d("Printer.initWebView[" + (Calendar.getInstance().timeInMillis - startTime) + "]ms")
     }
 
@@ -170,10 +163,10 @@ object PrinterUtils {
                 val oStream = sock.getOutputStream()
                 oStream.write(DataForSendToPrinterPos80.initializePrinter())
                 params[0].second.sortedBy { it.index }.map {
-//                    val bm1 = convertGreyImg(it.data)
-//                    val bm2 = resizeImage(bm1, 572, false)
+                    val bm1 = convertGreyImg(it.data)
+                    val bm2 = resizeImage(bm1, 572, false)
                     DataForSendToPrinterPos80.printRasterBmp(
-                            0, it.data, BitmapToByteData.BmpType.Threshold, BitmapToByteData.AlignType.Left, 576)
+                            0, bm2, BitmapToByteData.BmpType.Threshold, BitmapToByteData.AlignType.Left, 576)
                 }.toList().forEach {
                     oStream.write(it)
                 }

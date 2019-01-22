@@ -95,11 +95,11 @@ public class PrintingDataGeneratorCus {
             }
 
             Bitmap slice = Bitmap.createBitmap(bitmap, 0, pointY, width, actualSliceHeight);
-            // add conver RGB and resize 572
-            Bitmap bm1 = convertGreyImg(slice);
-            Bitmap bm2 = resizeImage(bm1, 572, false);
-            //
-            slices.add(new BitmapSliceCus(sliceCount++, bm2));
+//            // add conver RGB and resize 572
+//            Bitmap bm1 = convertGreyImg(slice);
+//            Bitmap bm2 = resizeImage(bm1, 572, false);
+//            //
+            slices.add(new BitmapSliceCus(sliceCount++, slice));
 
             pointY += actualSliceHeight;
             actualSliceHeight += increaseSpace;

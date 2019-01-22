@@ -87,22 +87,22 @@ public class PrintingWebViewCus {
         final Long[] startTime = new Long[1];
         Single<Bitmap> capture = Single.fromCallable(() -> {
             startTime[0] = Calendar.getInstance().getTimeInMillis();
-//            webView.measure(View.MeasureSpec.makeMeasureSpec(
-//                    View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED),
-//                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
-//            webView.layout(0, 0, webView.getMeasuredWidth(),
-//                    webView.getMeasuredHeight());
-//            webView.setDrawingCacheEnabled(true);
-//            webView.buildDrawingCache();
-//            Bitmap  b = Bitmap.createBitmap( webView.getWidth(),
-//                    webView.getMeasuredHeight(), Bitmap.Config.ARGB_8888);
-//            Canvas c = new Canvas( b );
-//
-//            webView.draw( c );
-//            float scale = webView.getScale();
-//            Bitmap bm = Bitmap.createBitmap(webView.getWidth(), (int) (webView.getContentHeight() * scale + 0.5), Bitmap.Config.ARGB_8888);
-//            Canvas cv = new Canvas(bm);
-//            webView.draw(cv);
+            webView.measure(View.MeasureSpec.makeMeasureSpec(
+                    View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED),
+                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+            webView.layout(0, 0, webView.getMeasuredWidth(),
+                    webView.getMeasuredHeight());
+            webView.setDrawingCacheEnabled(true);
+            webView.buildDrawingCache();
+            Bitmap  b = Bitmap.createBitmap( webView.getWidth(),
+                    webView.getMeasuredHeight(), Bitmap.Config.ARGB_8888);
+            Canvas c = new Canvas( b );
+
+            webView.draw( c );
+            float scale = webView.getScale();
+            Bitmap bm = Bitmap.createBitmap(webView.getWidth(), (int) (webView.getContentHeight() * scale + 0.5), Bitmap.Config.ARGB_8888);
+            Canvas cv = new Canvas(bm);
+            webView.draw(cv);
             int width = webView.getWidth();
             int height = webView.getContentHeight();
 
@@ -116,7 +116,7 @@ public class PrintingWebViewCus {
             Canvas canvas = new Canvas(bitmap);
             webView.draw(canvas);
 
-            return bitmap;
+            return bm;
         });
 
         return capture.subscribeOn(AndroidSchedulers.mainThread())
@@ -206,8 +206,8 @@ public class PrintingWebViewCus {
     public void create(Context context, WebView web) {
         this.context = context;
         this.webView= web;
-       // createWebView(context,webView);
-
+        //createWebView(context,webView);
+//        this.webView.setLayoutParams(new LinearLayout.LayoutParams(576, LinearLayout.LayoutParams.WRAP_CONTENT));
         // init web view
         initWebView();
 
