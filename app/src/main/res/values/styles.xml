@@ -8,6 +8,9 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
-    <style name="AppTheme.NoDisplay" parent="android:Theme.NoDisplay">
+    <!--<style name="AppTheme.NoDisplay" parent="android:Theme.NoDisplay">-->
+    <!--</style>-->
+    <style name="AppTheme.NoDisplay" parent="android:Theme.Translucent.NoTitleBar">
+
     </style>
 </resources>

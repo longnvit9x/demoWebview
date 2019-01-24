@@ -81,7 +81,7 @@ class MainActivity : AppCompatActivity() {
                     "\t\t     \"customer_email\":\"longnv@neo.vn\"\n" +
                     "\t\t    }"
             i++
-            this@MainActivity.startActivityForResult(WebPrintActivity.newIntent(this,"10.252.10.208","pay-template",ticket),REQUEST_CODE_PRINT)
+            this@MainActivity.startActivityForResult(WebPrintActivity.newIntent(this,"10.252.10.124","pay-template",ticket),REQUEST_CODE_PRINT)
         }
     }
 
