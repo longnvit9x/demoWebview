@@ -11,6 +11,8 @@ import net.posprinter.utils.BitmapToByteData
 import net.posprinter.utils.DataForSendToPrinterPos80
 import timber.log.Timber
 import java.io.IOException
+import java.io.OutputStream
+import java.net.InetSocketAddress
 import java.net.Socket
 import java.net.UnknownHostException
 import java.util.*
@@ -18,11 +20,17 @@ import java.util.concurrent.TimeUnit
 
 
 object PrinterUtils {
+    var socket: Socket? = null
+
+    init {
+        socket = Socket()
+    }
+
     const val RESULT_SUCCESS = 1
     const val RESULT_ERROR = 2
     const val RESULT_CONNECT_ERROR = 3
     const val RESULT_HOST_ERROR = 4
-    fun addHtmlAndPrint(ip: String, templateId: String, json: String, onCallBack: (result: Int) -> Unit): Completable {
+    fun addHtmlAndPrint(outputStream: OutputStream, templateId: String, json: String, onCallBack: (result: Int) -> Unit): Completable {
         val startTime = LongArray(1)
         return Completable.complete()
                 .doOnComplete { startTime[0] = Calendar.getInstance().timeInMillis }
@@ -33,14 +41,14 @@ object PrinterUtils {
                         override fun onPostDone(result: Int) {
                             onCallBack.invoke(result)
                         }
-                    }).execute(Pair(ip, slices))
+                    }).execute(Pair(outputStream, slices))
                 }.toCompletable()
                 .doOnComplete { Timber.d("Printer.addHtml[" + (Calendar.getInstance().timeInMillis - startTime[0]) + "]ms") }
     }
 
     private fun generatePrintingSlices(templateId: String, json: String): Observable<PrintingDataSliceCus> {
         return PrintingWebViewCus.getInstance().loadPrintingContent(templateId, json)
-                .delay(1000, TimeUnit.MILLISECONDS)
+                .delay(300, TimeUnit.MILLISECONDS)
                 .andThen(PrintingWebViewCus.getInstance().captureWebView())
                 .flatMapObservable(PrintingDataGeneratorCus::generatePrintingSlices)
     }
@@ -53,13 +61,13 @@ object PrinterUtils {
 
     fun initWebView(context: Context, webview: WebView, indexUrl: String) {
         val startTime = Calendar.getInstance().timeInMillis
-        PrintingWebViewCus.getInstance().indexUrl=indexUrl
-        PrintingWebViewCus.getInstance().create(context,webview)
+        PrintingWebViewCus.getInstance().indexUrl = indexUrl
+        PrintingWebViewCus.getInstance().create(context, webview)
         Timber.d("Printer.initWebView[" + (Calendar.getInstance().timeInMillis - startTime) + "]ms")
     }
 
 
-    class ProcessConnectAndPrinter constructor(private val listener: ListenerProcessPrinter) : AsyncTask<Pair<String, List<PrintingDataSliceCus>>, String, Int>() {
+    class ProcessConnectAndPrinter constructor(private val listener: ListenerProcessPrinter) : AsyncTask<Pair<OutputStream, List<PrintingDataSliceCus>>, String, Int>() {
         interface ListenerProcessPrinter {
             fun onPostDone(result: Int)
         }
@@ -157,10 +165,9 @@ object PrinterUtils {
             return mBitmap
         }
 
-        override fun doInBackground(vararg params: Pair<String, List<PrintingDataSliceCus>>): Int {
+        override fun doInBackground(vararg params: Pair<OutputStream, List<PrintingDataSliceCus>>): Int {
             try {
-                val sock = Socket(params[0].first, 9100)
-                val oStream = sock.getOutputStream()
+                val oStream = params[0].first
                 oStream.write(DataForSendToPrinterPos80.initializePrinter())
                 params[0].second.sortedBy { it.index }.map {
                     val bm1 = convertGreyImg(it.data)
@@ -172,7 +179,6 @@ object PrinterUtils {
                 }
                 oStream.write(DataForSendToPrinterPos80.selectCutPagerModerAndCutPager(66, 1))
                 oStream.close()
-                sock.close()
                 return RESULT_SUCCESS
             } catch (e: UnknownHostException) {
                 return RESULT_HOST_ERROR

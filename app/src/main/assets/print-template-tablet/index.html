@@ -6,39 +6,7 @@
 
     <link rel="stylesheet" href="styles.css"/>
     <script type="text/javascript">
-	    var ticket_value={
-	        "ticket_id": "123",
-		    "ticket_name": "TICKET-15:40",
-		    "employee":"Longnv",
-		    "pos_name":"Phùng Chí Kiên- Hà Nội",
-		    "ticket_note": "Hãy giữ lại hóa đơn",
-		    "create_date": "11/1/2018 11:30:32",
-		    "pay_date": "11/1/2018 11:30:32",
-		    "list_product_ticket": [
-		        {
-		            "product_name": "Bánh á",
-		            "product_price": "10,000",
-		            "number": "10",
-		            "total_price": "100,000"
-		        },
-		        {
-		             "product_name": "Bánh ú",
-		            "product_price": "10,000",
-		            "number": 10,
-		            "total_price": "100,000"
-		        }
-		    ],
-		    "total_product_price":"200,000",
-		     "total_discount":"10,000",
-		     "tax_amount":"5,000",
-		     "total_amount":"195,000",
-		     "money": "200,000",
-		     "money_back": "5,000",
-		     "is_show_customer": true,
-		     "customer_name":"Nguyễn Văn Long"
-		    }
-
-		var ticket = {
+	    	var ticket = {
 			"TICKET":" PHIẾU TÍNH TIỀN",
 			"TICKET_ID": "Số hóa đơn",
 		    "TICKET_NAME": "Tên hóa đơn",
@@ -55,6 +23,27 @@
 		    "MONEY_BACK": "Trả lại",
 		    "CUSTOMER_NAME": "Khách hàng",
 		    "CUSTOMER_EMAIL": "Email",
+		    "CUSTOMER_SDT": "SDT",
+		    "DISCOUNT_APPLY":"Các khuyến mại áp dụng",
+		    "PAY_METHOD":"Hình thức thanh toán",
+		    "customer_sdt":"0987654321",
+		    "discounts":[
+                    {
+                        "discount_name":"Giảm giá khách hàng thân thiết",
+                        "discount_value":"10.000",
+                    },
+                    {
+                        "discount_name":"Giảm giá hóa đơn",
+                        "discount_value":"20.000",
+                    }
+		    ],
+		    "taxes":[
+                    {
+                        "tax_name":"Thuế VAC",
+                        "tax_value":"10.000",
+                    }
+		    ],
+		    "pay_method":"Tiền mặt",
 		    "image":"http://dzodzo.com.vn/Upload/item_image/camep.jpg",
 		    "header":"Công ty Cổ phần Đầu tư Phát triển Công nghệ và Truyền thông - NEO Tòa CT2, Tràng An Complex, Số 1 Phùng Chí Kiên, Nghĩa Đô, Cầu Giấy, Hà nội",
 		    "footer":"Chúc bạn một ngày tốt lành",
@@ -111,15 +100,15 @@
 
 
 
+
     </script>
 
     <script id="pay-template" type="text/x-tmpl">
 		<div class="font-size-14">
-	         <div class="print-logo"
-	         style='background: url({%=o.image%})'>
+	         <!--<div class="print-logo"-->
+	         <!--style='background: url({%=o.image%})'>-->
 
-	         </div>
-
+	         <!--</div>-->
 	        <div class="line">
 	            <p>{%=o.header%}</p>
 	        </div>
@@ -131,6 +120,11 @@
             <div class="line">
 				{%=o.TICKET_ID%}
 				<span class="value">{%=o.ticket_id%}</span>
+			</div>
+
+			 <div class="line">
+				{%=o.TICKET_NAME%}
+				<span class="value">{%=o.ticket_name%}</span>
 			</div>
 
 	        <div class="line">
@@ -150,19 +144,27 @@
 				<span class="value">{%=o.pos_name%}</span>
 			</div>
 
-            {% if (o.is_show_customer) { %}
+            {% if (o.customer_name!= null && o.customer_name!="") { %}
               	<div class="line">
 					{%=o.CUSTOMER_NAME%}
 					:
 					<span class="value">{%=o.customer_name%}</span>
 				</div>
+			{%}%}
+			{% if (o.customer_email!= null && o.customer_email!="") { %}
 				<div class="line">
 					{%=o.CUSTOMER_EMAIL%}
 					:
 					<span class="value">{%=o.customer_email%}</span>
 				</div>
            	{%}%}
-
+           	{% if (o.customer_sdt!= null && o.customer_sdt!="") { %}
+				<div class="line">
+					{%=o.CUSTOMER_SDT%}
+					:
+					<span class="value">{%=o.customer_sdt%}</span>
+				</div>
+           	{%}%}
 			<div>
 		             <table class="table-dashed">
 		                <thead>
@@ -197,17 +199,23 @@
 				<span class="value">{%=o.total_product_price%}</span>
 			</div>
 
-			<div class="line">
-				{%=o.TOTAL_DISCOUNT%}
-				:
-				<span class="value">{%=o.total_discount%}</span>
-			</div>
+            {% if (o.discounts!= null&& o.discounts!="") { %}
+			      {% for (var i=0; i<o.discounts.length; i++) { %}
+			            <div class="line">
+				            {%=o.discounts[i].discount_name%}:
+				            <span class="value">{%=o.discounts[i].discount_value%}</span>
+			            </div>
+			      {%}%}
+			 {%}%}
 
-			<div class="line">
-				{%=o.TAX_AMOUNT%}
-				:
-				<span class="value">{%=o.tax_amount%}</span>
-			</div>
+            {% if (o.taxes!= null&& o.taxes!="") { %}
+			      {% for (var i=0; i<o.taxes.length; i++) { %}
+			            <div class="line">
+				            {%=o.taxes[i].tax_name%}:
+				            <span class="value">{%=o.taxes[i].tax_value%}</span>
+			            </div>
+			      {%}%}
+			 {%}%}
 
  			<hr class="print-hr">
 
@@ -230,21 +238,19 @@
 				:
 				<span class="value">{%=o.money_back%}</span>
 			</div>
-
+            <div class="line">
+				{%=o.PAY_METHOD%}
+				:
+				<span class="value">{%=o.pay_method%}</span>
+			</div>
 			 <div class="line">
 	            <p>{%=o.footer%}</p>
 	        </div>
 		</div>
-
     </script>
 
     <script id="temporary-template" type="text/x-tmpl">
 		<div class="font-size-14">
-	         <div class="print-logo"
-	         style='background: url({%=o.image%})'>
-
-	         </div>
-
 	        <div class="line">
 	            <p>{%=o.header%}</p>
 	        </div>
@@ -326,6 +332,7 @@
 
 
 
+
     </script>
     <script id="send-bar-template" type="text/x-tmpl">
 		<div class="font-size-14">
@@ -333,10 +340,16 @@
 	        	<p><b>{%=o.TICKET%}</b></p>
 	        </div>
 
-            <div class="line">
-				{%=o.TICKET_ID%}
+            <!--<div class="line">-->
+				<!--{%=o.TICKET_ID%}-->
+				<!--:-->
+				<!--<span class="value">{%=o.ticket_id%}</span>-->
+			<!--</div>-->
+
+			<div class="line">
+				{%=o.TICKET_NAME%}
 				:
-				<span class="value">{%=o.ticket_id%}</span>
+				<span class="value">{%=o.ticket_name%}</span>
 			</div>
 
 			<div class="line">
@@ -377,33 +390,31 @@
 
 
 
+
     </script>
     <script id="check-item-template" type="text/x-tmpl">
 		<div class="font-size-14">
-	         <div class="print-logo"
-	         style='background: url({%=o.image%})'>
-
-	         </div>
-
-	        <div class="line">
-	            <p>{%=o.header%}</p>
-	        </div>
-
 	        <div class="line">
 	        	<p><b>{%=o.TICKET%}</b></p>
 	        </div>
 
 	        <div class="line">
-	        	{%=o.EMPLOYEE%}:
-	            <span class="value">{%=o.employee%}</span>
-	        </div>
-
-			<div class="line">
-				{%=o.POS_NAME %}
+				{%=o.TICKET_ID%}
 				:
-				<span class="value">{%=o.pos_name%}</span>
+				<span class="value">{%=o.ticket_id%}</span>
 			</div>
 
+            <div class="line">
+				{%=o.TICKET_NAME%}
+				:
+				<span class="value">{%=o.ticket_name%}</span>
+			</div>
+
+			<div class="line">
+				{%=o.CREATE_DATE%}
+				:
+				<span class="value">{%=o.create_date%}</span>
+			</div>
 
 			<div>
 		            <table class="table-dashed">
@@ -411,9 +422,9 @@
 		                <tr>
 		                 <td class="align-left">STT</td>
 		                    <td class="align-center">Tên</td>
-		                    <td class="align-center">SL</td>
 		                    <td class="align-center">Đơn giá</td>
-		                    <td class="align-right">Thành tiền</td>
+		                    <td class="align-center">SL đặt</td>
+		                    <td class="align-right">Đã gửi</td>
 		                </tr>
 		                </thead>
 		                <tbody>
@@ -422,56 +433,23 @@
 			                	<tr>
 			                	    <td class="align-left">{%=(i+1)%}</td>
 			                	    <td class="align-left">{%=o.list_product_ticket[i].product_name%}</td>
-			                	    <td class="align-center">{%=o.list_product_ticket[i].number%}</td>
-			                    	<td class="align-right">{%=o.list_product_ticket[i].product_price%}</td>
-			                    	<td class="align-right">{%=o.list_product_ticket[i].total_price%}</td>
+			                	    <td class="align-center">{%=o.list_product_ticket[i].product_price%}</td>
+			                    	<td class="align-center">{%=o.list_product_ticket[i].number%}</td>
+			                    	<td class="align-center">{%=o.list_product_ticket[i].number_send%}</td>
 			                	</tr>
 			                {%}%}
 			              {%}%}
 		                </tbody>
 		            </table>
 		    </div>
-		    <hr class="print-hr">
-
-			<div class="line">
-				{%=o.TOTAL_PRODUCT_PRICE%}
-				:
-				<span class="value">{%=o.total_product_price%}</span>
-			</div>
-
- 			<hr class="print-hr">
-
-			{% if (o.is_show_customer) { %}
-              	<div class="line">
-					{%=o.CUSTOMER_NAME%}
-					:
-					<span class="value">{%=o.customer_name%}</span>
-				</div>
-				<div class="line">
-					{%=o.CUSTOMER_EMAIL%}
-					:
-					<span class="value">{%=o.customer_email%}</span>
-				</div>
-           	{%}%}
-
-			<div class="line">
-				{%=o.create_date%}
-				<span class="value">{%=o.ticket_id%}</span>
-			</div>
-
-			 <div class="line">
-	            <p>{%=o.footer%}</p>
-	        </div>
 		</div>
-
-
 
     </script>
 </head>
 <body>
 <div id="content"></div>
 <script type="text/javascript">
-		// loadContent('pay-template', ticket);
+		//loadContent('pay-template', ticket);
 </script>
 </body>
 </html>

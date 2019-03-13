@@ -99,24 +99,24 @@ public class PrintingWebViewCus {
             Canvas c = new Canvas( b );
 
             webView.draw( c );
-            float scale = webView.getScale();
-            Bitmap bm = Bitmap.createBitmap(webView.getWidth(), (int) (webView.getContentHeight() * scale + 0.5), Bitmap.Config.ARGB_8888);
-            Canvas cv = new Canvas(bm);
-            webView.draw(cv);
-            int width = webView.getWidth();
-            int height = webView.getContentHeight();
+//            float scale = webView.getScale();
+//            Bitmap bm = Bitmap.createBitmap(webView.getWidth(), (int) (webView.getContentHeight() * scale + 0.5), Bitmap.Config.ARGB_8888);
+//            Canvas cv = new Canvas(bm);
+//            webView.draw(cv);
+//            int width = webView.getWidth();
+//            int height = webView.getContentHeight();
+//
+//            if (width <= 0 || height <= 10) {
+//                throw new PageNotLoadedExceptionCus();
+//            }
+//
+//            // WebView screenshot
+//            Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+//
+//            Canvas canvas = new Canvas(bitmap);
+//            webView.draw(canvas);
 
-            if (width <= 0 || height <= 10) {
-                throw new PageNotLoadedExceptionCus();
-            }
-
-            // WebView screenshot
-            Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
-
-            Canvas canvas = new Canvas(bitmap);
-            webView.draw(canvas);
-
-            return bm;
+            return b;
         });
 
         return capture.subscribeOn(AndroidSchedulers.mainThread())

@@ -4,8 +4,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.support.v4.widget.NestedScrollView
-import android.util.DisplayMetrics
 import android.webkit.WebView
 import android.widget.FrameLayout
 import android.widget.LinearLayout
@@ -14,6 +12,10 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.annotations.NonNull
 import io.reactivex.observers.DisposableCompletableObserver
 import vn.neo.myapplication.print.PrinterUtils
+import java.io.IOException
+import java.net.InetSocketAddress
+import java.net.Socket
+import java.net.UnknownHostException
 import java.util.concurrent.TimeUnit
 
 class WebPrintActivity : Activity() {
@@ -37,27 +39,7 @@ class WebPrintActivity : Activity() {
         findViewById<LinearLayout>(R.id.lnl_container).layoutParams = FrameLayout.LayoutParams(576, FrameLayout.LayoutParams.WRAP_CONTENT)
         findViewById<LinearLayout>(R.id.lnl_content).layoutParams = FrameLayout.LayoutParams(576, FrameLayout.LayoutParams.WRAP_CONTENT)
         findViewById<WebView>(R.id.webview).layoutParams = LinearLayout.LayoutParams(576, LinearLayout.LayoutParams.WRAP_CONTENT)
-        val metrics = DisplayMetrics()
-        windowManager.defaultDisplay.getMetrics(metrics)
-        val widthPixels = metrics.widthPixels
-        val heightPixels = metrics.heightPixels
-        val scaleFactor = metrics.density
-        val widthDp = widthPixels / scaleFactor
-        val heightDp = heightPixels / scaleFactor
-        val smallestWidth = Math.min(widthDp, heightDp)
-        val widthDpi = metrics.xdpi
-        val heightDpi = metrics.ydpi
-        val widthInches = widthPixels / widthDpi
-        val heightInches = heightPixels / heightDpi
-        val diagonalInches = Math.sqrt(
-                (widthInches * widthInches + heightInches * heightInches).toDouble())
-        val indexUrl = if ((diagonalInches >= 10 && diagonalInches < 11) || (diagonalInches >= 7 && diagonalInches < 8)) {
-            "file:///android_asset/print-template-tablet/index.html"
-        } else {
-            "file:///android_asset/print-template-tablet/index.html"
-//            "file:///android_asset/print-template/index.html"
-        }
-        PrinterUtils.initWebView(this, findViewById(R.id.webview), indexUrl)
+        PrinterUtils.initWebView(this, findViewById(R.id.webview), "file:///android_asset/print-template-tablet/index.html")
         Completable.complete().delay(3, TimeUnit.SECONDS)
                 .andThen(PrinterUtils.preLoadHtml("pay-template", "{}"))
                 .subscribe {
@@ -65,25 +47,55 @@ class WebPrintActivity : Activity() {
                 }
     }
 
+    val thread = Thread(Runnable {
+        try {
+            val sock = Socket()
+            sock.connect(InetSocketAddress(ip, 9100), 1000)
+            PrinterUtils.addHtmlAndPrint(sock.getOutputStream(), template!!, json!!) {
+                sock.close()
+                this@WebPrintActivity.setResult(Activity.RESULT_OK, Intent().apply {
+                    putExtra(RESULT_PRINT, it)
+                })
+                this.finish()
+            }.observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(object : DisposableCompletableObserver() {
+                        override fun onComplete() {
+
+                        }
+
+                        override fun onError(@NonNull e: Throwable) {
+
+                        }
+                    })
+        } catch (e: UnknownHostException) {
+            this@WebPrintActivity.setResult(Activity.RESULT_OK, Intent().apply {
+                putExtra(RESULT_PRINT, PrinterUtils.RESULT_HOST_ERROR)
+            })
+            this.finish()
+        } catch (e: IOException) {
+            this@WebPrintActivity.setResult(Activity.RESULT_OK, Intent().apply {
+                putExtra(RESULT_PRINT, PrinterUtils.RESULT_CONNECT_ERROR)
+            })
+            this.finish()
+        } catch (e: Exception) {
+            this@WebPrintActivity.setResult(Activity.RESULT_OK, Intent().apply {
+                putExtra(RESULT_PRINT, PrinterUtils.RESULT_ERROR)
+            })
+            this.finish()
+        }
+    })
+
+    var ip: String? = null
+    var template: String?= null
+    var json: String?= null
     private fun initData() {
         val ip = intent.getStringExtra(IP)
         val template = intent.getStringExtra(TEMPLATE)
         val json = intent.getStringExtra(JSON)
-        PrinterUtils.addHtmlAndPrint(ip, template, json) {
-            this@WebPrintActivity.setResult(Activity.RESULT_OK, Intent().apply {
-                putExtra(RESULT_PRINT, it)
-            })
-            this.finish()
-        }.observeOn(AndroidSchedulers.mainThread())
-                .subscribe(object : DisposableCompletableObserver() {
-                    override fun onComplete() {
-
-                    }
-
-                    override fun onError(@NonNull e: Throwable) {
-
-                    }
-                })
+        this.ip = ip
+        this.template= template
+        this.json= json
+        thread.start()
     }
 
 }
