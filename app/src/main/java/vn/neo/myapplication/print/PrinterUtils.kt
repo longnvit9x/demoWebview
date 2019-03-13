@@ -170,10 +170,8 @@ object PrinterUtils {
                 val oStream = params[0].first
                 oStream.write(DataForSendToPrinterPos80.initializePrinter())
                 params[0].second.sortedBy { it.index }.map {
-                    val bm1 = convertGreyImg(it.data)
-                    val bm2 = resizeImage(bm1, 572, false)
                     DataForSendToPrinterPos80.printRasterBmp(
-                            0, bm2, BitmapToByteData.BmpType.Threshold, BitmapToByteData.AlignType.Left, 576)
+                            0, it.data, BitmapToByteData.BmpType.Threshold, BitmapToByteData.AlignType.Left, 576)
                 }.toList().forEach {
                     oStream.write(it)
                 }
